@@ -1,0 +1,46 @@
+eureka服务注册中心：
+	启动类上加@EnableEurekaServer注解
+	配置eureka.client.registerWithEureka=false 和 fetchRegistry=false
+
+eureka服务提供者：
+	启动类上加注解@EnableEurekaClient（该注解表明向服务中心注册服务）
+	配置服务注册中心地址
+
+负载均衡：ribbon和feign
+	通过注解@EnableDiscoveryCilent向服务注册中心注册服务（启动类添加）
+	
+	ribbon + restTemplate：
+		通过注解@Bean向ioc中注入RestTemplate，@LoadBalanced开启负载均衡功能
+		restTemplate调用getForObject()方法去调用client
+
+	feign：
+		
+		启动类上加@EnableFeignClients开启feign功能
+		定义一个接口，通过@FeignClient("服务器名")来指定调用哪个服务
+
+断路器：在启动类上加@EnablHystrix
+	
+	ribbon中使用，在调用服务的方法上加注解@HystrixCommand（fallbackMethod="熔断的方法"）
+	feign中自带有短路器，默认没有打开，通过配置feign.hystrix.enabled=true打开断路器，在指定服务接口A的注解
+      @FeignCilent中加fallback属性，fallback属性值为熔断类B，熔断类B必须实现接口A，并将实现类B注入到ioc中
+
+路由器：在启动类上加@EnableZuulProxy 开启zuul路由功能
+
+	在配置文件application中配置路由 如下：
+	zuul:
+  	 routes:
+          api-a:
+           path: /api-a/**
+           serviceId: service1
+          api-b:
+           path: /api-b/**
+           serviceId: service2
+	以api-a开头的请求都会转发给服务service1，以api-b开头的请求都会转发给service2
+	zuul还能过滤，做一些安全验证，通过继承ZuulFilter类实现验证：
+		filterType():返回一个字符串代表过滤器的类型，有四种类型：pre路由之前 routing路由之时 post路由之后 error发送错误调用
+		filterOrder():过滤的顺序
+		shouldFilter():是否要过滤 
+		run():过滤器的具体逻辑
+
+
+	
